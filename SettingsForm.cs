@@ -36,11 +36,13 @@ namespace ZenStatesDebugTool
         private readonly string wmiScope = "root\\wmi";
         private readonly string profilesPath;
         private readonly string defaultsPath;
+        private readonly string fmaxProfilePath;
         private ManagementObject classInstance;
         private string instanceName;
         private ManagementBaseObject pack;
         private const string profilesFolderName = "profiles";
         private const string filename = "co_profile.txt";
+        private const string fmaxFilename = "fmax_profile.txt";
         private readonly string[] args;
         private readonly bool isApplyProfile;
 
@@ -54,6 +56,7 @@ namespace ZenStatesDebugTool
             {
                 profilesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, profilesFolderName);
                 defaultsPath =  Path.Combine(profilesPath, filename);
+                fmaxProfilePath = Path.Combine(profilesPath, fmaxFilename);
                 
                 args = Environment.GetCommandLineArgs();
                 foreach (string arg in args)
@@ -218,6 +221,12 @@ namespace ZenStatesDebugTool
                         cpu.SetPsmMarginSingleCore(EncodeCoreMarginBitmask(index), Convert.ToInt32(value));
                     }
                 }
+            }
+
+            if (File.Exists(fmaxProfilePath))
+            {
+                if (uint.TryParse(File.ReadAllText(fmaxProfilePath).Trim(), out uint fmax))
+                    cpu.SetFMax(fmax);
             }
         }
 
@@ -1733,6 +1742,15 @@ namespace ZenStatesDebugTool
                     HandleError("Could not save profile to file!");
                 }
             }
+
+            try
+            {
+                File.WriteAllText(fmaxProfilePath, numericUpDownFmax.Value.ToString());
+            }
+            catch (Exception)
+            {
+                HandleError("Could not save FMax profile to file!");
+            }
         }
 
         private List<Tuple<int, int>> LoadCOProfile()
@@ -1790,6 +1808,12 @@ namespace ZenStatesDebugTool
                 }
 
                 textBoxResult.Text = $"Saved CO profile loaded from {defaultsPath}" + Environment.NewLine + textBoxResult.Text;
+            }
+
+            if (File.Exists(fmaxProfilePath))
+            {
+                if (uint.TryParse(File.ReadAllText(fmaxProfilePath).Trim(), out uint fmax))
+                    numericUpDownFmax.Value = fmax;
             }
         }
 
