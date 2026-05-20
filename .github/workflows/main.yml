@@ -23,11 +23,19 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore ZenStatesDebugTool.sln
 
+      - name: Install .NET Framework 4.5 Reference Assemblies
+        shell: pwsh
+        run: |
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net45 -Version 1.0.3 -OutputDirectory packages
+          $path = Join-Path $pwd "packages\Microsoft.NETFramework.ReferenceAssemblies.net45.1.0.3\build\.NETFramework\v4.5"
+          echo "FPATH=$path" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Reference assemblies path: $path"
+
       - name: Build Debug
-        run: msbuild ZenStatesDebugTool.sln /p:Configuration=Debug /p:Platform="Any CPU"
+        run: msbuild ZenStatesDebugTool.sln /p:Configuration=Debug /p:Platform="Any CPU" /p:FrameworkPathOverride="$env:FPATH"
 
       - name: Build Release
-        run: msbuild ZenStatesDebugTool.sln /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild ZenStatesDebugTool.sln /p:Configuration=Release /p:Platform="Any CPU" /p:FrameworkPathOverride="$env:FPATH"
 
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
